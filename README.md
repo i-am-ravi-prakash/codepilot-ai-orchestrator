@@ -1,12 +1,14 @@
 # CodePilot AI  (Task Spec Agent)
 
+## Project in progress
+
 CodePilot AI is an AI-powered developer assistant that turns natural language requests (e.g., from WhatsApp) into structured development tasks.
 
-## Week 1 – What is implemented?
+What is implemented?
 
 - ✅ FastAPI backend
 - ✅ Endpoint: `POST /tasks/from-message`
-  - Input: free-text message (e.g. "Fix bug in /transactions API when amount is null")
+  - Input: Natural language text message (e.g. "Fix bug in /transactions API when amount is null")
   - Uses OpenAI (`gpt-4o`) to:
     - Analyse the message
     - Generate a structured TaskSpec JSON:
@@ -29,6 +31,8 @@ CodePilot AI is an AI-powered developer assistant that turns natural language re
 - AI: OpenAI `gpt-4o`
 - Data storage: Local JSON files (`tasks/` folder)
 
+<!--
+
 ## How to run
 
 ```bash
@@ -45,4 +49,4 @@ pip install -r requirements.txt
 # OPENAI_API_KEY=sk-...
 
 uvicorn src.main:app --reload
-
+-->
