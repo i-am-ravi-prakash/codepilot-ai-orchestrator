@@ -5,3 +5,4 @@ tasks/
 *.pyc
 .DS_Store
 Info.txt
+workspace/

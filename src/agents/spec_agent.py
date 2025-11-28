@@ -41,32 +41,36 @@ def generate_task_spec(raw_text: str) -> dict:
     """
     template_task = TaskSpec.create_default()
 
-    system_prompt = (
-        "You are the Task Specification Agent for CodePilot AI. "
-        "Your job is to convert a developer's free-text request into a clean JSON task."
-    )
+    system_prompt = """
+You are CodePilot AI Spec Agent.
+
+You receive a natural language request describing a code change, bug fix, or refactor
+for a codebase (currently `journalApp`, a Java Spring Boot app).
+
+Your job is to produce a JSON task specification with at least:
+
+- title: short human-readable title
+- description: clear explanation of what to change
+- affected_files: array of relative file paths in the repo
+    - If the user mentions specific file names or paths, use them.
+    - If the user only describes the behavior or error, infer the most likely files
+      based on the description (controllers, services, utilities, etc.).
+    - If you are not sure, include a reasonable best guess and explain in description.
+
+Do NOT include task_id, created_at, type, source, or target_repo in the JSON;
+those will be added by the backend.
+
+Return ONLY JSON.
+""".strip()
 
     user_prompt = f"""
 User request:
-\"\"\"{raw_text}\"\"\"
+{raw_text}
 
-You must fill this JSON template (except task_id, created_at, source):
-
-{{
-  "type": "",
-  "title": "",
-  "description": "",
-  "target_repo": "",
-  "affected_files": [],
-  "acceptance_criteria": [],
-  "priority": ""
-}}
-
-Rules:
-- type must be one of: "bugfix", "feature", "refactor".
-- priority must be one of: "low", "medium", "high".
-- Return ONLY valid JSON. Do NOT wrap it in ``` or any other text.
-"""
+Infer the task specification.
+If file paths are not explicitly given, guess the most likely files
+in the journalApp project.
+""".strip()
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -77,18 +81,24 @@ Rules:
         temperature=0.2,
     )
 
-    content = response.choices[0].message.content.strip()
-    print("🔍 RAW MODEL OUTPUT:\n", content)  # Helpful debug
+    content = (response.choices[0].message.content or "").strip()
+    print("🔍 RAW MODEL OUTPUT:\n", content)
 
-    # Try to extract a clean JSON string
+    # Extract clean JSON and parse it
     json_str = _extract_json(content)
     data = json.loads(json_str)
 
-    # Build final TaskSpec (which adds task_id, created_at, source)
-    task = TaskSpec(
-        task_id=template_task.task_id,
-        created_at=template_task.created_at,
-        source="WhatsApp",
-        **data
-    )
+    # Start from the default TaskSpec (which has all required fields)
+    base = template_task.dict()
+
+    # Overwrite with fields from the model (title, description, affected_files, etc.)
+    base.update(data)
+
+    # Force the correct source
+    base["source"] = "CodePilot AI User Portal"
+
+    # Validate using TaskSpec model
+    task = TaskSpec(**base)
     return task.dict()
+
+
