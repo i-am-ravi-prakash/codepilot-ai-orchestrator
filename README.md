@@ -38,7 +38,7 @@ Autonomous multi-agent backend for **CodePilot AI** – a personal project that 
    - Endpoint: `POST /tasks/{task_id}/apply-change`
    - For a given task:
      - Validates that the task exists and is **open**
-     - Clones / updates the target repo (e.g. `journalApp`) to a local workspace
+     - Clones / updates the target repo to a local workspace
      - Creates a new feature branch:
 
        ```text
@@ -67,7 +67,7 @@ Autonomous multi-agent backend for **CodePilot AI** – a personal project that 
      - Tasks storage folder availability
      - Target repo configuration status
 
-> WhatsApp / Twilio integration and automatic testing / PR creation are **planned**, but intentionally not wired yet in this repo snapshot.
+> WhatsApp / Twilio integration is **planned**, but intentionally not wired yet in this repo snapshot.
 
 ---
 
