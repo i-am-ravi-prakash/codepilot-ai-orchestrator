@@ -1,4 +1,4 @@
-# CodePilot AI Orchestrator
+# CodePilot AI Orchestrator (Project in progress)
 
 Autonomous multi-agent backend for **CodePilot AI** – a personal project that turns natural language change requests into real code changes on a Git repository.
 
