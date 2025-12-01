@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TARGET_REPO_URL = os.getenv("TARGET_REPO_URL")
-TARGET_REPO_DEFAULT_BRANCH = os.getenv("TARGET_REPO_DEFAULT_BRANCH", "main")
+TARGET_REPO_DEFAULT_BRANCH = os.getenv("TARGET_REPO_DEFAULT_BRANCH", "master")
 TARGET_REPO_LOCAL_PATH = Path(os.getenv("TARGET_REPO_LOCAL_PATH", "./workspace/journalApp"))
 
 
@@ -31,23 +31,67 @@ def run_git_command(args, cwd=None):
 
 def ensure_repo_cloned():
     """
-    Clone journalApp into workspace if not already cloned.
-    If already cloned, fetch & pull latest default branch.
-    """
-    if not TARGET_REPO_URL:
-        raise RuntimeError("TARGET_REPO_URL not set in .env")
+    Ensure the target repo is cloned locally and on the default branch.
 
+    If the repo already exists but has local modifications that block
+    `git checkout <default branch>`, we aggressively clean the working tree
+    (reset --hard + clean -fd) because this is a *workspace* clone managed
+    by CodePilot, not a place for manual editing.
+    """
     if not TARGET_REPO_LOCAL_PATH.exists():
+        print("📥 Cloning repo for the first time...")
         TARGET_REPO_LOCAL_PATH.parent.mkdir(parents=True, exist_ok=True)
-        # Clone
-        run_git_command(["clone", TARGET_REPO_URL, str(TARGET_REPO_LOCAL_PATH)])
-    else:
-        print("📁 Repo already cloned, pulling latest changes...")
-        run_git_command(["fetch", "origin"], cwd=TARGET_REPO_LOCAL_PATH)
+
+        run_git_command(
+            ["clone", TARGET_REPO_URL, str(TARGET_REPO_LOCAL_PATH)],
+            cwd=None,
+        )
         run_git_command(
             ["checkout", TARGET_REPO_DEFAULT_BRANCH],
             cwd=TARGET_REPO_LOCAL_PATH,
         )
+        run_git_command(
+            ["pull", "origin", TARGET_REPO_DEFAULT_BRANCH],
+            cwd=TARGET_REPO_LOCAL_PATH,
+        )
+    else:
+        print("📁 Repo already cloned, pulling latest changes...")
+        run_git_command(["fetch", "origin"], cwd=TARGET_REPO_LOCAL_PATH)
+
+        # Try to checkout default branch; if it fails due to local changes, clean and retry
+        try:
+            run_git_command(
+                ["checkout", TARGET_REPO_DEFAULT_BRANCH],
+                cwd=TARGET_REPO_LOCAL_PATH,
+            )
+        except RuntimeError as e:
+            print(
+                f"⚠️ Checkout {TARGET_REPO_DEFAULT_BRANCH} failed, cleaning working tree: {e}"
+            )
+
+            # Discard all local changes in the current branch
+            subprocess.run(
+                ["git", "reset", "--hard"],
+                cwd=TARGET_REPO_LOCAL_PATH,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            # Remove untracked files (e.g., .DS_Store, build artifacts)
+            subprocess.run(
+                ["git", "clean", "-fd"],
+                cwd=TARGET_REPO_LOCAL_PATH,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+
+            # Retry checkout; if this still fails, let it raise
+            run_git_command(
+                ["checkout", TARGET_REPO_DEFAULT_BRANCH],
+                cwd=TARGET_REPO_LOCAL_PATH,
+            )
+
         run_git_command(
             ["pull", "origin", TARGET_REPO_DEFAULT_BRANCH],
             cwd=TARGET_REPO_LOCAL_PATH,

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CodePilot AI – User Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-card: #020617;
+      --bg-card-alt: #020617;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --danger: #f97373;
+      --success: #22c55e;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border-subtle: #1f2937;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-soft: 0 18px 35px rgba(15, 23, 42, 0.65);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1d283a 0, #020617 55%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+      width: 100%;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .app-title {
+      font-size: 1.6rem;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-title-badge {
+      font-size: 0.76rem;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: linear-gradient(90deg, rgba(56,189,248,0.18), rgba(59,130,246,0.22));
+      border: 1px solid rgba(148,163,184,0.55);
+      color: #e5e7eb;
+    }
+
+    .app-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      max-width: 480px;
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .pill {
+      font-size: 0.72rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15,23,42,0.8);
+    }
+
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.08), transparent 45%),
+        radial-gradient(circle at bottom right, rgba(15,118,110,0.09), transparent 55%),
+        var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px 18px;
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid rgba(148,163,184,0.18);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15,23,42,0.85);
+      color: var(--text-main);
+      padding: 9px 11px;
+      font-size: 0.9rem;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      transition: border 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+
+    input[type="text"] { min-height: 0; }
+
+    textarea::placeholder,
+    input::placeholder {
+      color: #6b7280;
+    }
+
+    textarea:focus,
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.45);
+      background: #020617;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease,
+        opacity 0.1s ease;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: white;
+      box-shadow: 0 12px 25px rgba(56,189,248,0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(15,23,42,0.95);
+      color: var(--text-main);
+      border: 1px solid rgba(148,163,184,0.6);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px dashed rgba(75,85,99,0.7);
+    }
+
+    .btn-small {
+      padding: 5px 10px;
+      font-size: 0.78rem;
+    }
+
+    .log-panel {
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: var(--radius-md);
+      background: rgba(15,23,42,0.95);
+      border: 1px solid rgba(31,41,55,0.95);
+      max-height: 220px;
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 0.78rem;
+      white-space: pre-wrap;
+      color: #d1d5db;
+    }
+
+    .log-panel.empty {
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    .task-list {
+      margin-top: 8px;
+      max-height: 220px;
+      overflow: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(31,41,55,0.9);
+      background: rgba(15,23,42,0.95);
+    }
+
+    .task-row {
+      padding: 7px 9px;
+      border-bottom: 1px solid rgba(30,41,59,0.85);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+    }
+
+    .task-row:last-child { border-bottom: none; }
+
+    .task-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .task-title { font-weight: 500; }
+
+    .task-meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .task-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+
+    footer {
+      margin-top: 24px;
+      padding: 10px 16px 16px;
+      font-size: 0.72rem;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 5px;
+    }
+
+    .inline-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .inline-input-row input[type="text"] {
+      max-width: 260px;
+    }
+
+    .status-pill {
+      font-size: 0.7rem;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(55,65,81,0.9);
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <div class="title-block">
+        <div class="app-title">
+          CodePilot AI
+          <span class="app-title-badge">Developer Preview</span>
+        </div>
+        <span id="healthPill" class="badge" style="background:rgba(255,255,255,0.1); margin-left:12px;">Checking...</span>
+        <div class="app-subtitle">
+          Natural language → code changes → tests. A friendly portal on top of your CodePilot AI orchestrator.
+        </div>
+        <div class="pill-row">
+          <div class="pill">
+            <span class="pill-dot"></span>
+            Connected to local orchestrator
+          </div>
+          <div class="pill">
+            Uses: /tasks, /apply-change, /run-tests
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT: create tasks & actions -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">New task</div>
+            <div class="card-subtitle">Describe the change in plain English. CodePilot will create a task spec.</div>
+          </div>
+        </div>
+
+        <div class="section-label">Change description</div>
+        <textarea id="messageInput"
+          placeholder="Example: Add logging to Utilities.java when saving a journal entry, and update tests if needed."></textarea>
+
+        <div class="btn-row">
+          <button class="btn-primary" id="btnCreateTask">
+            ➕ Create task
+          </button>
+          <button class="btn-secondary btn-small" id="btnHealth">
+            ⚙️ Check /health
+          </button>
+        </div>
+
+        <div class="hint" id="lastTaskHint">
+          No task created yet.
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(30,41,59,0.9);margin:14px 0 10px;" />
+
+        <div class="section-label">Task actions</div>
+        <div class="inline-input-row">
+          <input type="text" id="taskIdInput" placeholder="Task ID (will auto-fill from last created)" />
+          <button class="btn-secondary btn-small" id="btnApplyChange">
+            🚀 Apply change
+          </button>
+          <button class="btn-secondary btn-small" id="btnRunTests">
+            ✅ Run tests
+          </button>
+        </div>
+        <div class="hint">
+          Flow: create task → apply change → run tests. Branch name pattern: <code>cpai-&lt;first 6 of task id&gt;</code>.
+        </div>
+
+        <div class="section-label" style="margin-top:12px;">Logs</div>
+        <div id="logPanel" class="log-panel empty">
+          No actions yet. Create a task to see details here.
+        </div>
+      </div>
+
+      <!-- RIGHT: task list -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Recent tasks</div>
+            <div class="card-subtitle">Fetched from <code>GET /tasks</code></div>
+          </div>
+          <button class="btn-ghost btn-small" id="btnRefreshTasks">🔄 Refresh</button>
+        </div>
+
+        <div class="task-list" id="taskList">
+          <div class="task-row">
+            <div class="task-main">
+              <div class="task-title">No tasks yet</div>
+              <div class="task-meta">Create a task on the left to see it here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Running against <code>http://127.0.0.1:8000</code>
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const messageInput = document.getElementById("messageInput");
+    const taskIdInput = document.getElementById("taskIdInput");
+    const lastTaskHint = document.getElementById("lastTaskHint");
+    const logPanel = document.getElementById("logPanel");
+    const taskList = document.getElementById("taskList");
+
+    let lastTaskId = null;
+
+    function appendLog(text) {
+      const now = new Date().toLocaleTimeString();
+      const line = `[${now}] ${text}\n`;
+      if (logPanel.classList.contains("empty")) {
+        logPanel.textContent = line;
+        logPanel.classList.remove("empty");
+      } else {
+        logPanel.textContent += line;
+      }
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+async function callApi(endpoint, method = "GET", body = null, button = null) {
+    try {
+        if (button) {
+            button.disabled = true;
+            button.style.opacity = "0.6";
+        }
+
+        const res = await fetch("http://127.0.0.1:8000" + endpoint, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: body ? JSON.stringify(body) : null
+        });
+
+        const data = await res.json();
+        return data;
+
+    } catch (err) {
+        appendLog("❌ API error: " + err);
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.style.opacity = "1";
+        }
+    }
+}
+
+    async function checkHealth() {
+      await callApi("/health");
+    }
+
+    async function createTask() {
+      const message = messageInput.value.trim();
+      if (!message) {
+        alert("Please enter a change description.");
+        return;
+      }
+
+      const payload = { message };
+      const data = await callApi("/tasks/from-message", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      if (data && data.task_id) {
+        lastTaskId = data.task_id;
+        taskIdInput.value = lastTaskId;
+        lastTaskHint.textContent = `Last task: ${data.task_id} – ${data.title || "No title"}`;
+        appendLog(`✅ Task created with id=${data.task_id}`);
+        await refreshTasks();
+      } else {
+        appendLog("⚠️ /tasks/from-message did not return a task_id.");
+      }
+    }
+
+    async function applyChange() {
+      const taskId = (taskIdInput.value || lastTaskId || "").trim();
+      if (!taskId) {
+        alert("Please provide a task id (or create a task first).");
+        return;
+      }
+      await callApi(`/tasks/${encodeURIComponent(taskId)}/apply-change`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      appendLog(`🚀 Apply-change triggered for task ${taskId}`);
+      await refreshTasks();
+    }
+
+    async function runTests() {
+      const taskId = (taskIdInput.value || lastTaskId || "").trim();
+      if (!taskId) {
+        alert("Please provide a task id (or create a task first).");
+        return;
+      }
+      await callApi(`/tasks/${encodeURIComponent(taskId)}/run-tests`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      appendLog(`✅ Run-tests triggered for task ${taskId}`);
+      await refreshTasks();
+    }
+
+    function renderTasks(tasks) {
+      if (!tasks || !tasks.length) {
+        taskList.innerHTML = `
+          <div class="task-row">
+            <div class="task-main">
+              <div class="task-title">No tasks</div>
+              <div class="task-meta">Create a task on the left to see it here.</div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      taskList.innerHTML = "";
+      tasks.forEach((t) => {
+        const row = document.createElement("div");
+        row.className = "task-row";
+        row.innerHTML = `
+          <div class="task-main">
+            <div class="task-title">${(t.title || "Untitled task")
+              .toString()
+              .slice(0, 80)}</div>
+            <div class="task-meta">
+              <span class="status-pill">${(t.status || "unknown").toUpperCase()}</span>
+              &nbsp; created: ${t.created_at || "n/a"}
+            </div>
+            <div class="task-id">${t.task_id}</div>
+          </div>
+        `;
+        row.onclick = () => {
+          taskIdInput.value = t.task_id;
+          lastTaskId = t.task_id;
+        };
+        taskList.appendChild(row);
+      });
+    }
+
+    async function refreshTasks() {
+      const data = await callApi("/tasks");
+      // assuming backend returns { tasks: [...] } or an array
+      const tasks = Array.isArray(data) ? data : data?.tasks || [];
+      renderTasks(tasks);
+    }
+
+    // Wire up buttons
+    document.getElementById("btnHealth").onclick = checkHealth;
+    document.getElementById("btnCreateTask").onclick = async (e) => {
+    const msg = prompt("Enter change description:");
+    const data = await callApi("/tasks/from-message", "POST", { message: msg }, e.target);
+    appendLog("Task created → " + JSON.stringify(data));
+};
+    document.getElementById("btnApplyChange").onclick = applyChange;
+    document.getElementById("btnRunTests").onclick = runTests;
+    document.getElementById("btnRefreshTasks").onclick = refreshTasks;
+
+    // On load, ping health + load tasks
+    (async () => {
+      try {
+        await checkHealth();
+        await refreshTasks();
+      } catch {
+        // ignore on startup
+      }
+    })();
+
+    async function pollHealth() {
+    const pill = document.getElementById("healthPill");
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/health");
+        const data = await res.json();
+
+        pill.textContent = "Healthy";
+        pill.style.background = "rgba(34,197,94,0.25)";   // green
+        pill.style.color = "#fff";
+    } catch (err) {
+        pill.textContent = "Offline";
+        pill.style.background = "rgba(239,68,68,0.25)";   // red
+        pill.style.color = "#fff";
+    }
+}
+
+// Poll every 30 seconds
+setInterval(pollHealth, 30000);
+
+// Run once immediately
+pollHealth();
+
+  </script>
+</body>
+</html>
