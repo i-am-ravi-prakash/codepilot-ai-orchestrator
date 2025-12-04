@@ -6,20 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
+    /* ---------------------------------
+       LIGHT THEME (default variables)
+    ---------------------------------- */
     :root {
-      --bg: #0f172a;
+      --bg: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-alt: #f1f5f9;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.15);
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --border-subtle: #cbd5e1;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.08);
+      --toast-bg: #111827;
+      --toast-text: #f9fafb;
+    }
+
+    /* ---------------------------------
+       DARK THEME OVERRIDES
+    ---------------------------------- */
+    body.dark-theme {
+      --bg: #020617;
       --bg-card: #020617;
-      --bg-card-alt: #020617;
+      --bg-card-alt: #0f172a;
       --accent: #38bdf8;
-      --accent-soft: rgba(56, 189, 248, 0.15);
+      --accent-soft: rgba(56, 189, 248, 0.18);
       --danger: #f97373;
       --success: #22c55e;
+      --warning: #facc15;
       --text-main: #e5e7eb;
       --text-muted: #9ca3af;
       --border-subtle: #1f2937;
-      --radius-lg: 16px;
-      --radius-md: 10px;
-      --shadow-soft: 0 18px 35px rgba(15, 23, 42, 0.65);
+      --shadow-soft: 0 18px 35px rgba(15, 23, 42, 0.85);
+      --toast-bg: #020617;
+      --toast-text: #e5e7eb;
     }
 
     * { box-sizing: border-box; }
@@ -28,11 +54,12 @@
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
         "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #1d283a 0, #020617 55%);
+      background: var(--bg);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      transition: background 0.2s ease, color 0.2s ease;
     }
 
     .app-shell {
@@ -42,12 +69,21 @@
       width: 100%;
     }
 
+    /* HEADER */
+
     header {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      flex-direction: column;
+      gap: 10px;
       margin-bottom: 24px;
+    }
+
+    .header-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .title-block {
@@ -57,59 +93,128 @@
     }
 
     .app-title {
-      font-size: 1.6rem;
-      font-weight: 650;
-      letter-spacing: 0.02em;
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .app-title-badge {
-      font-size: 0.76rem;
+      font-size: 0.78rem;
       border-radius: 999px;
-      padding: 4px 10px;
-      background: linear-gradient(90deg, rgba(56,189,248,0.18), rgba(59,130,246,0.22));
-      border: 1px solid rgba(148,163,184,0.55);
+      padding: 5px 10px;
+      background: #e0e7ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+    }
+
+    body.dark-theme .app-title-badge {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(148, 163, 184, 0.6);
       color: #e5e7eb;
     }
 
     .app-subtitle {
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       color: var(--text-muted);
-      max-width: 480px;
     }
 
-    .pill-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
+    /* THEME TOGGLE */
 
-    .pill {
-      font-size: 0.72rem;
-      padding: 4px 9px;
+    .theme-toggle-btn {
       border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.5);
-      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 12px;
+      background: var(--bg-card);
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(15,23,42,0.8);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .theme-toggle-btn:hover {
+      background: var(--bg-card-alt);
+    }
+
+    .theme-toggle-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* HEALTH STATUS + DOT */
+
+    .health-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .health-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--warning);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    }
+
+    .health-dot-checking {
+      background: var(--warning);
+    }
+
+    .health-dot-ok {
+      background: var(--success);
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.3);
+    }
+
+    .health-dot-degraded {
+      background: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+    }
+
+    .health-dot-offline {
+      background: var(--danger);
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+    }
+
+    /* PILLS */
+
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 0.75rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card-alt);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .pill-dot {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 999px;
-      background: #22c55e;
+      background: var(--success);
     }
+
+    /* GRID */
 
     .grid {
       display: grid;
       grid-template-columns: 3fr 2fr;
-      gap: 16px;
+      gap: 20px;
       align-items: flex-start;
     }
 
@@ -117,45 +222,32 @@
       .grid { grid-template-columns: 1fr; }
     }
 
-    .card {
-      background:
-        radial-gradient(circle at top left, rgba(56,189,248,0.08), transparent 45%),
-        radial-gradient(circle at bottom right, rgba(15,118,110,0.09), transparent 55%),
-        var(--bg-card);
-      border-radius: var(--radius-lg);
-      padding: 16px 18px 18px;
-      border: 1px solid rgba(148,163,184,0.25);
-      box-shadow: var(--shadow-soft);
-      position: relative;
-      overflow: hidden;
-    }
+    /* CARD */
 
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      border: 1px solid rgba(148,163,184,0.18);
-      opacity: 0.4;
-      pointer-events: none;
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+      transition: background 0.2s ease, border-color 0.2s ease;
     }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
       gap: 10px;
+      margin-bottom: 10px;
     }
 
     .card-title {
-      font-size: 0.95rem;
+      font-size: 1rem;
       font-weight: 600;
-      letter-spacing: 0.02em;
     }
 
     .card-subtitle {
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
     }
 
@@ -165,35 +257,101 @@
       letter-spacing: 0.12em;
       color: var(--text-muted);
       margin-bottom: 4px;
+      margin-top: 12px;
     }
+
+    /* INPUTS */
 
     textarea,
     input[type="text"] {
       width: 100%;
-      border-radius: 10px;
+      background: #ffffff;
       border: 1px solid var(--border-subtle);
-      background: rgba(15,23,42,0.85);
-      color: var(--text-main);
-      padding: 9px 11px;
+      padding: 9px 12px;
+      border-radius: 10px;
       font-size: 0.9rem;
+      color: var(--text-main);
       resize: vertical;
       min-height: 80px;
-      outline: none;
-      transition: border 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     }
 
-    input[type="text"] { min-height: 0; }
-
-    textarea::placeholder,
-    input::placeholder {
-      color: #6b7280;
+    body.dark-theme textarea,
+    body.dark-theme input[type="text"] {
+      background: #020617;
+      color: #e5e7eb;
+      border-color: #1f2937;
     }
 
     textarea:focus,
     input[type="text"]:focus {
+      outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(56,189,248,0.45);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+      background: #ffffff;
+    }
+
+    body.dark-theme textarea:focus,
+    body.dark-theme input[type="text"]:focus {
       background: #020617;
+    }
+
+    textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    /* BUTTONS */
+
+    button {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease,
+        opacity 0.1s ease;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    body.dark-theme .btn-secondary {
+      background: #0f172a;
+      border-color: #1f2937;
+      color: #e5e7eb;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px dashed var(--border-subtle);
+    }
+
+    .btn-small {
+      padding: 6px 11px;
+      font-size: 0.78rem;
     }
 
     .btn-row {
@@ -203,230 +361,466 @@
       margin-top: 10px;
     }
 
-    button {
-      border-radius: 999px;
-      border: none;
-      padding: 8px 14px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease,
-        opacity 0.1s ease;
-    }
-
-    button:active { transform: scale(0.97); }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #38bdf8, #6366f1);
-      color: white;
-      box-shadow: 0 12px 25px rgba(56,189,248,0.4);
-    }
-
-    .btn-secondary {
-      background: rgba(15,23,42,0.95);
-      color: var(--text-main);
-      border: 1px solid rgba(148,163,184,0.6);
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px dashed rgba(75,85,99,0.7);
-    }
-
-    .btn-small {
-      padding: 5px 10px;
-      font-size: 0.78rem;
-    }
-
-    .log-panel {
-      margin-top: 10px;
-      padding: 9px 10px;
-      border-radius: var(--radius-md);
-      background: rgba(15,23,42,0.95);
-      border: 1px solid rgba(31,41,55,0.95);
-      max-height: 220px;
-      overflow: auto;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-        "Courier New", monospace;
-      font-size: 0.78rem;
-      white-space: pre-wrap;
-      color: #d1d5db;
-    }
-
-    .log-panel.empty {
-      color: #6b7280;
-      font-style: italic;
-    }
-
-    .task-list {
-      margin-top: 8px;
-      max-height: 220px;
-      overflow: auto;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(31,41,55,0.9);
-      background: rgba(15,23,42,0.95);
-    }
-
-    .task-row {
-      padding: 7px 9px;
-      border-bottom: 1px solid rgba(30,41,59,0.85);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.78rem;
-    }
-
-    .task-row:last-child { border-bottom: none; }
-
-    .task-main {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .task-title { font-weight: 500; }
-
-    .task-meta {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-    }
-
-    .task-id {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-        "Courier New", monospace;
-      font-size: 0.7rem;
-      color: #9ca3af;
-    }
-
-    footer {
-      margin-top: 24px;
-      padding: 10px 16px 16px;
-      font-size: 0.72rem;
-      color: #6b7280;
-      text-align: center;
-    }
-
-    .hint {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      margin-top: 5px;
-    }
-
     .inline-input-row {
       display: flex;
       gap: 8px;
       align-items: center;
-      margin-top: 6px;
       flex-wrap: wrap;
+      margin-top: 8px;
     }
 
     .inline-input-row input[type="text"] {
       max-width: 260px;
     }
 
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    /* LOG PANEL */
+
+    .log-panel {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      max-height: 230px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 0.8rem;
+      color: #334155;
+    }
+
+    body.dark-theme .log-panel {
+      background: #020617;
+      border-color: #1f2937;
+      color: #e5e7eb;
+    }
+
+    .log-panel.empty {
+      color: #94a3b8;
+    }
+
+    /* TASK LIST */
+
+    .task-list {
+      margin-top: 8px;
+      max-height: 230px;
+      overflow-y: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card-alt);
+    }
+
+    .task-row {
+      padding: 9px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    body.dark-theme .task-row {
+      border-bottom-color: #1f2937;
+    }
+
+    .task-row:last-child { border-bottom: none; }
+
+    .task-row:hover {
+      background: #e5edf7;
+    }
+
+    body.dark-theme .task-row:hover {
+      background: #020617;
+    }
+
+    .task-main {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .task-title { font-weight: 600; }
+
+    .task-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .task-id {
+      font-size: 0.72rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      color: #64748b;
+    }
+
+    /* STATUS PILL */
+
     .status-pill {
       font-size: 0.7rem;
       padding: 3px 7px;
       border-radius: 999px;
-      background: rgba(15,23,42,0.9);
-      border: 1px solid rgba(55,65,81,0.9);
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+    }
+
+    body.dark-theme .status-pill {
+      background: #020617;
+      border-color: #1f2937;
+      color: #e5e7eb;
+    }
+
+    /* FOOTER */
+
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    /* MODAL */
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border-radius: 18px;
+      padding: 20px 20px 16px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.4);
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .modal-close-btn {
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px 6px;
       color: var(--text-muted);
     }
+
+    .hidden { display: none; }
+
+    /* TOASTS */
+
+    .toast-container {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 50;
+    }
+
+    .toast {
+      min-width: 220px;
+      max-width: 320px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: var(--toast-bg);
+      color: var(--toast-text);
+      font-size: 0.8rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.5);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(4px);
+      animation: toast-in 0.18s ease-out forwards;
+    }
+
+    .toast-icon {
+      font-size: 1rem;
+      margin-top: 1px;
+    }
+
+    .toast.toast-success { border-left: 3px solid #22c55e; }
+    .toast.toast-error   { border-left: 3px solid #ef4444; }
+    .toast.toast-info    { border-left: 3px solid #38bdf8; }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(6px); }
+    }
+
+    /* TASK DETAILS DRAWER */
+    .task-details-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 360px;
+      height: 100vh;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border-subtle);
+      box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+      padding: 20px;
+      z-index: 60;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .task-details-drawer.open {
+      transform: translateX(0);
+    }
+
+    .task-details-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-details-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .drawer-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .drawer-content {
+      margin-top: 16px;
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+
+    .drawer-content .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 12px;
+      color: var(--text-muted);
+    }
+
+    .drawer-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* TASK FILTERS & SEARCH */
+
+    .task-controls-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .task-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .filter-pill {
+      font-size: 0.75rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card-alt);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .filter-pill.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .task-search-input {
+      min-height: 0;
+      height: 32px;
+      font-size: 0.82rem;
+      max-width: 100%;
+    }
+
+    /* TIMELINE */
+
+    .timeline {
+      margin-top: 8px;
+      padding-left: 0;
+      list-style: none;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-left: 14px;
+      margin: 6px 0;
+      font-size: 0.8rem;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -4px;
+      top: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .timeline-label {
+      font-weight: 500;
+    }
+
+    .timeline-meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
   </style>
 </head>
 <body>
   <div class="app-shell">
     <header>
-      <div class="title-block">
-        <div class="app-title">
-          CodePilot AI
-          <span class="app-title-badge">Developer Preview</span>
-        </div>
-        <span id="healthPill" class="badge" style="background:rgba(255,255,255,0.1); margin-left:12px;">Checking...</span>
-        <div class="app-subtitle">
-          Natural language → code changes → tests. A friendly portal on top of your CodePilot AI orchestrator.
-        </div>
-        <div class="pill-row">
-          <div class="pill">
-            <span class="pill-dot"></span>
-            Connected to local orchestrator
+      <div class="header-top-row">
+        <div class="title-block">
+          <div class="app-title">
+            CodePilot AI
+            <span class="app-title-badge">Developer Preview</span>
           </div>
-          <div class="pill">
-            Uses: /tasks, /apply-change, /run-tests
+          <div class="health-status">
+            <span id="healthText">Checking…</span>
+            <span id="healthDot" class="health-dot health-dot-checking"></span>
           </div>
+        </div>
+
+        <button id="themeToggleBtn" class="theme-toggle-btn" type="button">
+          <span id="themeIcon">🌞</span>
+          <span id="themeLabel">Light theme</span>
+        </button>
+      </div>
+
+      <div class="app-subtitle">
+        Natural language → code changes → tests. A friendly portal on top of your CodePilot AI orchestrator.
+      </div>
+
+      <div class="pill-row">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          Connected to local orchestrator
+        </div>
+        <div class="pill">
+          ⚙️ Uses: /tasks, /apply-change, /run-tests
         </div>
       </div>
     </header>
 
     <div class="grid">
-      <!-- LEFT: create tasks & actions -->
+      <!-- LEFT CARD: actions -->
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">New task</div>
-            <div class="card-subtitle">Describe the change in plain English. CodePilot will create a task spec.</div>
+            <div class="card-title">Task orchestration</div>
+            <div class="card-subtitle">Create a task, apply changes, and run tests.</div>
           </div>
-        </div>
-
-        <div class="section-label">Change description</div>
-        <textarea id="messageInput"
-          placeholder="Example: Add logging to Utilities.java when saving a journal entry, and update tests if needed."></textarea>
-
-        <div class="btn-row">
-          <button class="btn-primary" id="btnCreateTask">
-            ➕ Create task
-          </button>
-          <button class="btn-secondary btn-small" id="btnHealth">
-            ⚙️ Check /health
+          <button class="btn-primary btn-small" id="btnOpenTaskModal" type="button">
+            ✨ New task
           </button>
         </div>
-
-        <div class="hint" id="lastTaskHint">
-          No task created yet.
-        </div>
-
-        <hr style="border:none;border-top:1px solid rgba(30,41,59,0.9);margin:14px 0 10px;" />
 
         <div class="section-label">Task actions</div>
         <div class="inline-input-row">
-          <input type="text" id="taskIdInput" placeholder="Task ID (will auto-fill from last created)" />
-          <button class="btn-secondary btn-small" id="btnApplyChange">
+          <input type="text" id="taskIdInput" placeholder="Task ID (auto-filled from last created)" />
+          <button class="btn-secondary btn-small" id="btnApplyChange" type="button">
             🚀 Apply change
           </button>
-          <button class="btn-secondary btn-small" id="btnRunTests">
+          <button class="btn-secondary btn-small" id="btnRunTests" type="button">
             ✅ Run tests
           </button>
         </div>
-        <div class="hint">
-          Flow: create task → apply change → run tests. Branch name pattern: <code>cpai-&lt;first 6 of task id&gt;</code>.
+        <div class="hint" id="lastTaskHint">No task created yet.</div>
+
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn-ghost btn-small" id="btnHealth" type="button">
+            🩺 Check /health
+          </button>
         </div>
 
-        <div class="section-label" style="margin-top:12px;">Logs</div>
+        <div class="section-label">Logs</div>
         <div id="logPanel" class="log-panel empty">
           No actions yet. Create a task to see details here.
         </div>
       </div>
 
-      <!-- RIGHT: task list -->
+      <!-- RIGHT CARD: tasks -->
       <div class="card">
         <div class="card-header">
           <div>
             <div class="card-title">Recent tasks</div>
-            <div class="card-subtitle">Fetched from <code>GET /tasks</code></div>
+            <div class="card-subtitle">Fetched from GET /tasks</div>
           </div>
-          <button class="btn-ghost btn-small" id="btnRefreshTasks">🔄 Refresh</button>
+          <button class="btn-ghost btn-small" id="btnRefreshTasks" type="button">
+            🔁 Refresh
+          </button>
+        </div>
+
+        <div class="section-label">Filter & search</div>
+        <div class="task-controls-row">
+          <div class="task-filters">
+            <button type="button" class="filter-pill active" data-status="all" id="filterAll">All</button>
+            <button type="button" class="filter-pill" data-status="open" id="filterOpen">Open</button>
+            <button type="button" class="filter-pill" data-status="closed" id="filterClosed">Closed</button>
+            <button type="button" class="filter-pill" data-status="failed" id="filterFailed">Failed</button>
+            <button type="button" class="filter-pill" data-status="passed" id="filterPassed">Passed</button>
+          </div>
+          <input
+            type="text"
+            id="taskSearchInput"
+            class="task-search-input"
+            placeholder="Search tasks by title, description, or ID..."
+          />
         </div>
 
         <div class="task-list" id="taskList">
           <div class="task-row">
             <div class="task-main">
-              <div class="task-title">No tasks yet</div>
-              <div class="task-meta">Create a task on the left to see it here.</div>
+              <div class="task-title">No tasks</div>
+              <div class="task-meta">Create a task to see it here.</div>
             </div>
           </div>
         </div>
@@ -438,16 +832,124 @@
     </footer>
   </div>
 
+  <!-- MODAL FOR CREATING TASK -->
+  <div id="taskModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Create new task</div>
+        <button class="modal-close-btn" id="btnCloseModal" type="button">✕</button>
+      </div>
+      <div class="section-label">Change description</div>
+      <textarea id="modalMessageInput"
+        placeholder="Example: Add logging to Utilities.java when saving a journal entry, and update tests if needed."></textarea>
+      <div class="hint">
+        You can describe new features, bug fixes, or refactors. CodePilot will infer affected files.
+      </div>
+      <div class="btn-row" style="margin-top:14px; justify-content:flex-end;">
+        <button class="btn-secondary btn-small" id="btnCancelModal" type="button">
+          ✋ Cancel
+        </button>
+        <button class="btn-primary btn-small" id="btnModalCreateTask" type="button">
+          ➕ Create task
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- TASK DETAILS DRAWER -->
+  <div id="taskDetailsDrawer" class="task-details-drawer hidden">
+    <div class="task-details-header">
+      <div class="task-details-title">Task details</div>
+      <button class="drawer-close-btn" id="btnCloseDrawer">✕</button>
+    </div>
+
+    <div id="drawerContent" class="drawer-content">
+      <!-- Filled dynamically -->
+    </div>
+
+    <div class="drawer-actions">
+      <button class="btn-primary btn-small" id="drawerApplyBtn">🚀 Apply change</button>
+      <button class="btn-secondary btn-small" id="drawerRunTestsBtn">✅ Run tests</button>
+    </div>
+  </div>
+
   <script>
     const API_BASE = "http://127.0.0.1:8000";
 
-    const messageInput = document.getElementById("messageInput");
     const taskIdInput = document.getElementById("taskIdInput");
     const lastTaskHint = document.getElementById("lastTaskHint");
     const logPanel = document.getElementById("logPanel");
     const taskList = document.getElementById("taskList");
 
+    const taskModal = document.getElementById("taskModal");
+    const modalMessageInput = document.getElementById("modalMessageInput");
+    const btnOpenTaskModal = document.getElementById("btnOpenTaskModal");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    const btnCancelModal = document.getElementById("btnCancelModal");
+    const btnModalCreateTask = document.getElementById("btnModalCreateTask");
+
+    const healthText = document.getElementById("healthText");
+    const healthDot = document.getElementById("healthDot");
+
+    const toastContainer = document.getElementById("toastContainer");
+
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+
+    const taskSearchInput = document.getElementById("taskSearchInput");
+    const filterButtons = document.querySelectorAll(".filter-pill");
+
+    // Drawer elements will be set after DOM is fully loaded
+    let taskDetailsDrawer = null;
+    let drawerContent = null;
+    let btnCloseDrawer = null;
+    let drawerApplyBtn = null;
+    let drawerRunTestsBtn = null;
+
+    let selectedTask = null;
     let lastTaskId = null;
+
+    // Task list state for search/filter/auto-refresh
+    let allTasks = [];
+    let taskSearchQuery = "";
+    let statusFilter = "all";
+
+    /* ---------------- TOASTS ---------------- */
+
+    function showToast(message, type = "info") {
+      if (!toastContainer) return;
+
+      const toast = document.createElement("div");
+      toast.className = "toast toast-" + type;
+
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "toast-icon";
+      iconSpan.textContent =
+        type === "success" ? "✅" :
+        type === "error"   ? "❌" :
+                            "ℹ️";
+
+      const textSpan = document.createElement("span");
+      textSpan.textContent = message;
+
+      toast.appendChild(iconSpan);
+      toast.appendChild(textSpan);
+      toastContainer.appendChild(toast);
+
+      // Auto-hide
+      setTimeout(() => {
+        toast.style.animation = "toast-out 0.18s ease-in forwards";
+        setTimeout(() => {
+          toast.remove();
+        }, 200);
+      }, 2600);
+    }
+
+    /* ---------------- LOG PANEL ---------------- */
 
     function appendLog(text) {
       const now = new Date().toLocaleTimeString();
@@ -461,86 +963,154 @@
       logPanel.scrollTop = logPanel.scrollHeight;
     }
 
-async function callApi(endpoint, method = "GET", body = null, button = null) {
-    try {
+    /* ---------------- GENERIC API CALL ---------------- */
+
+    async function callApi(endpoint, method = "GET", body = null, button = null, quiet = false) {
+      try {
         if (button) {
-            button.disabled = true;
-            button.style.opacity = "0.6";
+          button.disabled = true;
+          button.style.opacity = "0.6";
         }
 
-        const res = await fetch("http://127.0.0.1:8000" + endpoint, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: body ? JSON.stringify(body) : null
+        const res = await fetch(API_BASE + endpoint, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: body ? JSON.stringify(body) : null,
         });
 
-        const data = await res.json();
-        return data;
+        const data = await res.json().catch(() => ({}));
 
-    } catch (err) {
-        appendLog("❌ API error: " + err);
-    } finally {
-        if (button) {
-            button.disabled = false;
-            button.style.opacity = "1";
+        if (!res.ok && !quiet) {
+          const msg = data?.detail || data?.error || `HTTP ${res.status}`;
+          showToast(msg, "error");
+          appendLog(`❌ ${endpoint} failed: ${msg}`);
         }
+
+        return data;
+      } catch (err) {
+        if (!quiet) {
+          showToast("Network error. Is the backend running?", "error");
+        }
+        appendLog("❌ API error: " + err);
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.style.opacity = "1";
+        }
+      }
     }
-}
+
+    /* ---------------- HEALTH ---------------- */
+
+    function setHealthUI(className, label) {
+      if (!healthDot || !healthText) return;
+      healthDot.className = "health-dot " + className;
+      healthText.textContent = label;
+    }
+
+    async function pollHealth() {
+      try {
+        const res = await fetch(API_BASE + "/health");
+        const data = await res.json().catch(() => ({}));
+        const status = (data.status || data.health || "").toLowerCase();
+
+        if (status === "ok" || status === "healthy") {
+          setHealthUI("health-dot-ok", "Healthy");
+        } else if (status === "degraded" || status === "warn") {
+          setHealthUI("health-dot-degraded", "Degraded");
+        } else {
+          setHealthUI("health-dot-offline", "Issue");
+        }
+      } catch {
+        setHealthUI("health-dot-offline", "Offline");
+      }
+    }
 
     async function checkHealth() {
-      await callApi("/health");
+      await pollHealth();
+      showToast("Health checked.", "info");
     }
 
+    /* ---------------- TASKS ---------------- */
+
     async function createTask() {
-      const message = messageInput.value.trim();
+      const message = modalMessageInput.value.trim();
       if (!message) {
-        alert("Please enter a change description.");
+        showToast("Please enter a change description.", "error");
         return;
       }
 
-      const payload = { message };
-      const data = await callApi("/tasks/from-message", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      const data = await callApi(
+        "/tasks/from-message",
+        "POST",
+        { message },
+        btnModalCreateTask
+      );
 
       if (data && data.task_id) {
         lastTaskId = data.task_id;
         taskIdInput.value = lastTaskId;
         lastTaskHint.textContent = `Last task: ${data.task_id} – ${data.title || "No title"}`;
         appendLog(`✅ Task created with id=${data.task_id}`);
+        showToast("Task created successfully.", "success");
+        closeTaskModal();
+        modalMessageInput.value = "";
         await refreshTasks();
-      } else {
-        appendLog("⚠️ /tasks/from-message did not return a task_id.");
       }
     }
 
     async function applyChange() {
       const taskId = (taskIdInput.value || lastTaskId || "").trim();
       if (!taskId) {
-        alert("Please provide a task id (or create a task first).");
+        showToast("Provide a task ID or create a task first.", "error");
         return;
       }
-      await callApi(`/tasks/${encodeURIComponent(taskId)}/apply-change`, {
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-      appendLog(`🚀 Apply-change triggered for task ${taskId}`);
-      await refreshTasks();
+
+      const data = await callApi(
+        `/tasks/${encodeURIComponent(taskId)}/apply-change`,
+        "POST",
+        {},
+        document.getElementById("btnApplyChange")
+      );
+
+      if (data && !data.detail) {
+        appendLog(`🚀 Apply-change triggered for task ${taskId}`);
+        showToast("Apply-change started.", "success");
+        await refreshTasks();
+      }
     }
 
     async function runTests() {
       const taskId = (taskIdInput.value || lastTaskId || "").trim();
       if (!taskId) {
-        alert("Please provide a task id (or create a task first).");
+        showToast("Provide a task ID or create a task first.", "error");
         return;
       }
-      await callApi(`/tasks/${encodeURIComponent(taskId)}/run-tests`, {
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-      appendLog(`✅ Run-tests triggered for task ${taskId}`);
-      await refreshTasks();
+
+      const data = await callApi(
+        `/tasks/${encodeURIComponent(taskId)}/run-tests`,
+        "POST",
+        {},
+        document.getElementById("btnRunTests")
+      );
+
+      if (data) {
+        const status = data.status || "unknown";
+        appendLog(`✅ run-tests for ${taskId} → status=${status}, exit=${data.exit_code}`);
+        showToast(`Tests ${status}`, status === "passed" || status === "success" ? "success" : "info");
+        await refreshTasks();
+      }
+    }
+
+    function normalizeStatusForFilter(status) {
+      const s = (status || "").toLowerCase();
+
+      if (!s || s === "open" || s.includes("pending")) return "open";
+      if (s === "closed" || s.includes("done") || s.includes("merged")) return "closed";
+      if (s.includes("fail") || s.includes("error")) return "failed";
+      if (s.includes("pass") || s.includes("success")) return "passed";
+
+      return "open"; // default bucket
     }
 
     function renderTasks(tasks) {
@@ -549,87 +1119,314 @@ async function callApi(endpoint, method = "GET", body = null, button = null) {
           <div class="task-row">
             <div class="task-main">
               <div class="task-title">No tasks</div>
-              <div class="task-meta">Create a task on the left to see it here.</div>
+              <div class="task-meta">Create a task to see it here.</div>
             </div>
-          </div>`;
+          </div>
+        `;
         return;
       }
 
+      // SORT newest → oldest
+      tasks.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
       taskList.innerHTML = "";
-      tasks.forEach((t) => {
+
+      tasks.forEach(task => {
         const row = document.createElement("div");
         row.className = "task-row";
         row.innerHTML = `
           <div class="task-main">
-            <div class="task-title">${(t.title || "Untitled task")
-              .toString()
-              .slice(0, 80)}</div>
+            <div class="task-title">${task.title || "Untitled task"}</div>
             <div class="task-meta">
-              <span class="status-pill">${(t.status || "unknown").toUpperCase()}</span>
-              &nbsp; created: ${t.created_at || "n/a"}
+              <span class="status-pill">${task.status || "OPEN"}</span>
+              created: ${task.created_at || "N/A"}
             </div>
-            <div class="task-id">${t.task_id}</div>
+            <div class="task-id">${task.task_id}</div>
           </div>
         `;
+
+        // Clicking row: select task, fill Task ID, open drawer
         row.onclick = () => {
-          taskIdInput.value = t.task_id;
-          lastTaskId = t.task_id;
+          selectedTask = task;
+          taskIdInput.value = task.task_id;
+          lastTaskId = task.task_id;
+          openTaskDrawer(task);
         };
+
         taskList.appendChild(row);
       });
     }
 
-    async function refreshTasks() {
-      const data = await callApi("/tasks");
-      // assuming backend returns { tasks: [...] } or an array
-      const tasks = Array.isArray(data) ? data : data?.tasks || [];
-      renderTasks(tasks);
+    function applyTaskFiltersAndRender() {
+      let filtered = allTasks.slice();
+
+      // Search
+      if (taskSearchQuery) {
+        const q = taskSearchQuery;
+        filtered = filtered.filter(t => {
+          const title = (t.title || "").toLowerCase();
+          const desc = (t.description || "").toLowerCase();
+          const id = (t.task_id || "").toLowerCase();
+          return (
+            title.includes(q) ||
+            desc.includes(q) ||
+            id.includes(q)
+          );
+        });
+      }
+
+      // Status filter
+      if (statusFilter !== "all") {
+        filtered = filtered.filter(t => normalizeStatusForFilter(t.status) === statusFilter);
+      }
+
+      renderTasks(filtered);
     }
 
-    // Wire up buttons
+    async function refreshTasks() {
+      const data = await callApi("/tasks", "GET", null, document.getElementById("btnRefreshTasks"), true);
+      const tasks = Array.isArray(data) ? data : data?.tasks || [];
+      allTasks = tasks;
+      applyTaskFiltersAndRender();
+    }
+
+    /* ---------------- MODAL HELPERS ---------------- */
+
+    function openTaskModal() {
+      taskModal.classList.remove("hidden");
+      setTimeout(() => modalMessageInput.focus(), 10);
+    }
+
+    function closeTaskModal() {
+      taskModal.classList.add("hidden");
+    }
+
+    /* ---------------- TASK DRAWER ---------------- */
+
+    function buildTimelineHtml(task) {
+      let items = [];
+
+      // If backend already sends a timeline or history array
+      if (Array.isArray(task.timeline)) {
+        items = task.timeline.map(entry => {
+          if (typeof entry === "string") {
+            return { label: entry, at: "" };
+          }
+          return {
+            label: entry.label || entry.event || "Event",
+            at: entry.at || entry.timestamp || "",
+            meta: entry.status || entry.details || ""
+          };
+        });
+      } else if (Array.isArray(task.history)) {
+        items = task.history.map(entry => {
+          if (typeof entry === "string") {
+            return { label: entry, at: "" };
+          }
+          return {
+            label: entry.label || entry.event || "Event",
+            at: entry.at || entry.timestamp || "",
+            meta: entry.status || entry.details || ""
+          };
+        });
+      } else {
+        // Fallback: build simple timeline from known fields
+        if (task.created_at) {
+          items.push({ label: "Task created", at: task.created_at });
+        }
+        if (task.last_applied_at) {
+          items.push({
+            label: "Apply change run",
+            at: task.last_applied_at,
+            meta: task.last_applied_status || ""
+          });
+        }
+        if (task.last_test_run_at) {
+          items.push({
+            label: "Tests run",
+            at: task.last_test_run_at,
+            meta: task.last_test_status || ""
+          });
+        }
+      }
+
+      if (!items.length) {
+        return `<div class="hint" style="margin-top:6px;">No timeline events yet.</div>`;
+      }
+
+      const htmlItems = items.map(item => {
+        const label = item.label || "Event";
+        const at = item.at || "";
+        const meta = item.meta || "";
+        return `
+          <li class="timeline-item">
+            <span class="timeline-dot"></span>
+            <div class="timeline-label">${label}</div>
+            ${at ? `<div class="timeline-meta">${at}</div>` : ""}
+            ${meta ? `<div class="timeline-meta">${meta}</div>` : ""}
+          </li>
+        `;
+      }).join("");
+
+      return `<ul class="timeline">${htmlItems}</ul>`;
+    }
+
+    function openTaskDrawer(task) {
+      if (!taskDetailsDrawer || !drawerContent) return;
+
+      const timelineHtml = buildTimelineHtml(task);
+
+      drawerContent.innerHTML = `
+        <div class="label">Title</div>
+        <div>${task.title || "Untitled"}</div>
+
+        <div class="label">Description</div>
+        <div>${task.description || "No description"}</div>
+
+        <div class="label">Status</div>
+        <div><span class="status-pill">${task.status || "UNKNOWN"}</span></div>
+
+        <div class="label">Affected files</div>
+        <div>${(task.affected_files || []).join("<br>") || "None"}</div>
+
+        <div class="label">Created</div>
+        <div>${task.created_at || "N/A"}</div>
+
+        <div class="label">Task ID</div>
+        <div class="task-id">${task.task_id}</div>
+
+        <div class="label">Timeline</div>
+        ${timelineHtml}
+      `;
+
+      taskDetailsDrawer.classList.remove("hidden");
+      taskDetailsDrawer.classList.add("open");
+    }
+
+    function closeTaskDrawer() {
+      if (!taskDetailsDrawer) return;
+      taskDetailsDrawer.classList.remove("open");
+      // Keep it visible but slid out, or you can add hidden after animation if you want
+      selectedTask = null;
+    }
+
+    /* ---------------- THEME TOGGLE ---------------- */
+
+    function syncThemeUI() {
+      const isDark = document.body.classList.contains("dark-theme");
+      if (isDark) {
+        themeIcon.textContent = "🌙";
+        themeLabel.textContent = "Dark theme";
+      } else {
+        themeIcon.textContent = "🌞";
+        themeLabel.textContent = "Light theme";
+      }
+    }
+
+    function loadThemeFromStorage() {
+      const saved = localStorage.getItem("cpai-theme");
+      if (saved === "dark") {
+        document.body.classList.add("dark-theme");
+      }
+      syncThemeUI();
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark-theme");
+      const isDark = document.body.classList.contains("dark-theme");
+      localStorage.setItem("cpai-theme", isDark ? "dark" : "light");
+      syncThemeUI();
+    }
+
+    /* ---------------- EVENT WIRING ---------------- */
+
     document.getElementById("btnHealth").onclick = checkHealth;
-    document.getElementById("btnCreateTask").onclick = async (e) => {
-    const msg = prompt("Enter change description:");
-    const data = await callApi("/tasks/from-message", "POST", { message: msg }, e.target);
-    appendLog("Task created → " + JSON.stringify(data));
-};
     document.getElementById("btnApplyChange").onclick = applyChange;
     document.getElementById("btnRunTests").onclick = runTests;
     document.getElementById("btnRefreshTasks").onclick = refreshTasks;
 
-    // On load, ping health + load tasks
-    (async () => {
-      try {
-        await checkHealth();
-        await refreshTasks();
-      } catch {
-        // ignore on startup
+    btnOpenTaskModal.onclick = openTaskModal;
+    btnCloseModal.onclick = closeTaskModal;
+    btnCancelModal.onclick = closeTaskModal;
+    btnModalCreateTask.onclick = createTask;
+
+    taskModal.addEventListener("click", (e) => {
+      if (e.target === taskModal) closeTaskModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !taskModal.classList.contains("hidden")) {
+        closeTaskModal();
       }
+    });
+
+    themeToggleBtn.onclick = toggleTheme;
+
+    // Search input
+    if (taskSearchInput) {
+      taskSearchInput.addEventListener("input", () => {
+        taskSearchQuery = taskSearchInput.value.trim().toLowerCase();
+        applyTaskFiltersAndRender();
+      });
+    }
+
+    // Status filter buttons
+    filterButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const status = btn.getAttribute("data-status") || "all";
+        statusFilter = status;
+
+        filterButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        applyTaskFiltersAndRender();
+      });
+    });
+
+    // Drawer-related wiring after DOM is fully parsed
+    window.addEventListener("DOMContentLoaded", () => {
+      taskDetailsDrawer = document.getElementById("taskDetailsDrawer");
+      drawerContent = document.getElementById("drawerContent");
+      btnCloseDrawer = document.getElementById("btnCloseDrawer");
+      drawerApplyBtn = document.getElementById("drawerApplyBtn");
+      drawerRunTestsBtn = document.getElementById("drawerRunTestsBtn");
+
+      if (btnCloseDrawer) {
+        btnCloseDrawer.onclick = closeTaskDrawer;
+      }
+
+      if (drawerApplyBtn) {
+        drawerApplyBtn.onclick = async () => {
+          if (!selectedTask) return;
+          taskIdInput.value = selectedTask.task_id;
+          lastTaskId = selectedTask.task_id;
+          await applyChange();
+        };
+      }
+
+      if (drawerRunTestsBtn) {
+        drawerRunTestsBtn.onclick = async () => {
+          if (!selectedTask) return;
+          taskIdInput.value = selectedTask.task_id;
+          lastTaskId = selectedTask.task_id;
+          await runTests();
+        };
+      }
+    });
+
+    /* ---------------- INITIALISE ---------------- */
+
+    (async () => {
+      loadThemeFromStorage();
+      await pollHealth();
+      await refreshTasks();
     })();
 
-    async function pollHealth() {
-    const pill = document.getElementById("healthPill");
+    // Health every 30s
+    setInterval(pollHealth, 30000);
 
-    try {
-        const res = await fetch("http://127.0.0.1:8000/health");
-        const data = await res.json();
-
-        pill.textContent = "Healthy";
-        pill.style.background = "rgba(34,197,94,0.25)";   // green
-        pill.style.color = "#fff";
-    } catch (err) {
-        pill.textContent = "Offline";
-        pill.style.background = "rgba(239,68,68,0.25)";   // red
-        pill.style.color = "#fff";
-    }
-}
-
-// Poll every 30 seconds
-setInterval(pollHealth, 30000);
-
-// Run once immediately
-pollHealth();
-
+    // Auto-refresh tasks every 60s
+    setInterval(refreshTasks, 60000);
   </script>
 </body>
 </html>
