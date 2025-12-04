@@ -12,6 +12,8 @@ from src.storage.task_storage import load_task, save_task
 #from src.services.git_service import ensure_repo_cloned
 from src.services.test_service import run_tests_in_repo
 from fastapi.middleware.cors import CORSMiddleware
+from src.models.task_spec import TaskSpec, TaskStatus
+from src.storage.task_storage import load_task, save_task, list_tasks, add_task_event
 
 app = FastAPI(
     title="CodePilot AI Orchestrator",
@@ -243,10 +245,67 @@ def run_tests_for_task(task_id: str):
     save_task(task)
 
     # 5. Return a summary with logs (tail)
+        # --- Update task status & timeline after successful apply-change ---
+
+    task = load_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+    # Ensure branch name is stored on task (even if not previously set)
+    task.branch_name = task.branch_name or f"cpai-{task_id[:6]}"
+
+    task.status = TaskStatus.CODE_APPLIED
+    task.last_applied_at = datetime.utcnow()
+
+    add_task_event(
+        task,
+        label="Code changes applied",
+        meta={
+            "branch": task.branch_name,
+            "files": task.affected_files,
+        },
+    )
+
+    save_task(task)
+
+        # --- Update task status & timeline based on test result ---
+
+    task = load_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+    task.last_test_run_at = datetime.utcnow()
+
+    overall_status = result.get("status")
+    task.last_test_status = overall_status
+
+    if overall_status == "passed":
+        task.status = TaskStatus.TESTS_PASSED
+        event_label = "Tests passed"
+    else:
+        task.status = TaskStatus.TESTS_FAILED
+        event_label = "Tests failed"
+
+    # Ensure branch_name is set on task for UI
+    task.branch_name = task.branch_name or f"cpai-{task_id[:6]}"
+
+    add_task_event(
+        task,
+        label=event_label,
+        meta={
+            "branch": task.branch_name,
+            "exit_code": result.get("exit_code"),
+        },
+    )
+
+    save_task(task)
+
+
+
     return {
-        "status": test_status,
         "task_id": task_id,
-        "branch": applied_branch,
+        "branch": task.branch_name,
+        "status": task.status,
         "exit_code": result["exit_code"],
         "stdout_tail": result["stdout"],
         "stderr_tail": result["stderr"],
@@ -424,11 +483,34 @@ def apply_change_for_task(task_id: str, req: ApplyTaskCodeRequest):
 
     save_task(task)
 
+        # --- Update task status & timeline after successful apply-change ---
+
+    task = load_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+    # Ensure we store the branch name on the task for UI
+    task.branch_name = task.branch_name or branch_name
+
+    task.status = TaskStatus.CODE_APPLIED
+    task.last_applied_at = datetime.utcnow()
+
+    add_task_event(
+        task,
+        label="Code changes applied",
+        meta={
+            "branch": task.branch_name,
+            "files": task.affected_files,
+        },
+    )
+
+    save_task(task)
+
+
     return {
-        "status": "ok",
+        "status": task.status,
         "task_id": task_id,
-        "branch": branch_name,
-        "files_modified": actual_modified_paths,
+        "branch": task.branch_name,
     }
 
 @app.post("/codepilot/apply-ai-change", include_in_schema=False)
