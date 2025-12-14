@@ -1,140 +1,92 @@
-import os
 import subprocess
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv()
-
-TARGET_REPO_URL = os.getenv("TARGET_REPO_URL")
-TARGET_REPO_DEFAULT_BRANCH = os.getenv("TARGET_REPO_DEFAULT_BRANCH", "master")
-TARGET_REPO_LOCAL_PATH = Path(os.getenv("TARGET_REPO_LOCAL_PATH", "./workspace/journalApp"))
+from typing import Optional, List
+import os
 
 
-def run_git_command(args, cwd=None):
+def run_git_command(
+    cmd: List[str],
+    cwd: Optional[str] = None,
+    allow_fail: bool = False,
+) -> subprocess.CompletedProcess:
     """
-    Helper to run a git command and print output.
-    Raises RuntimeError if git command fails.
+    Runs a git command with pretty logs.
+    If allow_fail=True, it won't raise even if command fails.
     """
-    print(f"▶ git {' '.join(args)} (cwd={cwd})")
-    result = subprocess.run(
-        ["git"] + args,
-        cwd=cwd,
-        text=True,
-        capture_output=True,
-    )
-    print("stdout:", result.stdout)
-    print("stderr:", result.stderr)
-    if result.returncode != 0:
-        raise RuntimeError(f"Git command failed: {' '.join(args)}")
-    return result.stdout.strip()
+    print(f"▶ {' '.join(cmd)} (cwd={cwd})")
+    p = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True)
+
+    if p.stdout:
+        print("stdout:", p.stdout.strip())
+    else:
+        print("stdout:")
+
+    if p.stderr:
+        print("stderr:", p.stderr.strip())
+    else:
+        print("stderr:")
+
+    if p.returncode != 0 and not allow_fail:
+        raise RuntimeError(
+            f"Git command failed: {' '.join(cmd)}\n"
+            f"cwd={cwd}\n"
+            f"stdout={p.stdout}\n"
+            f"stderr={p.stderr}"
+        )
+    return p
 
 
-def ensure_repo_cloned():
+def ensure_repo_cloned() -> Path:
     """
-    Ensure the target repo is cloned locally and on the default branch.
+    Ensures repo exists locally. Clones if not present, otherwise pulls latest.
+    Uses TARGET_REPO_URL and TARGET_REPO_LOCAL_PATH from env.
+    """
+    repo_url = os.getenv("TARGET_REPO_URL")
+    repo_path_str = os.getenv("TARGET_REPO_LOCAL_PATH")
 
-    If the repo already exists but has local modifications that block
-    `git checkout <default branch>`, we aggressively clean the working tree
-    (reset --hard + clean -fd) because this is a *workspace* clone managed
-    by CodePilot, not a place for manual editing.
-    """
-    if not TARGET_REPO_LOCAL_PATH.exists():
+    if not repo_url or not repo_path_str:
+        raise RuntimeError("TARGET_REPO_URL / TARGET_REPO_LOCAL_PATH not set")
+
+    repo_path = Path(repo_path_str)
+
+    if not repo_path.exists():
         print("📥 Cloning repo for the first time...")
-        TARGET_REPO_LOCAL_PATH.parent.mkdir(parents=True, exist_ok=True)
-
-        run_git_command(
-            ["clone", TARGET_REPO_URL, str(TARGET_REPO_LOCAL_PATH)],
-            cwd=None,
-        )
-        run_git_command(
-            ["checkout", TARGET_REPO_DEFAULT_BRANCH],
-            cwd=TARGET_REPO_LOCAL_PATH,
-        )
-        run_git_command(
-            ["pull", "origin", TARGET_REPO_DEFAULT_BRANCH],
-            cwd=TARGET_REPO_LOCAL_PATH,
-        )
+        repo_path.parent.mkdir(parents=True, exist_ok=True)
+        run_git_command(["git", "clone", repo_url, str(repo_path)], cwd=None)
     else:
         print("📁 Repo already cloned, pulling latest changes...")
-        run_git_command(["fetch", "origin"], cwd=TARGET_REPO_LOCAL_PATH)
+        run_git_command(["git", "fetch", "origin"], cwd=str(repo_path), allow_fail=False)
 
-        # Try to checkout default branch; if it fails due to local changes, clean and retry
-        try:
-            run_git_command(
-                ["checkout", TARGET_REPO_DEFAULT_BRANCH],
-                cwd=TARGET_REPO_LOCAL_PATH,
-            )
-        except RuntimeError as e:
-            print(
-                f"⚠️ Checkout {TARGET_REPO_DEFAULT_BRANCH} failed, cleaning working tree: {e}"
-            )
+    # Ensure base branch exists and pull
+    base_branch = "master"  # you can make configurable later
+    run_git_command(["git", "checkout", base_branch], cwd=str(repo_path), allow_fail=False)
+    run_git_command(["git", "pull", "origin", base_branch], cwd=str(repo_path), allow_fail=False)
 
-            # Discard all local changes in the current branch
-            subprocess.run(
-                ["git", "reset", "--hard"],
-                cwd=TARGET_REPO_LOCAL_PATH,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-            # Remove untracked files (e.g., .DS_Store, build artifacts)
-            subprocess.run(
-                ["git", "clean", "-fd"],
-                cwd=TARGET_REPO_LOCAL_PATH,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-
-            # Retry checkout; if this still fails, let it raise
-            run_git_command(
-                ["checkout", TARGET_REPO_DEFAULT_BRANCH],
-                cwd=TARGET_REPO_LOCAL_PATH,
-            )
-
-        run_git_command(
-            ["pull", "origin", TARGET_REPO_DEFAULT_BRANCH],
-            cwd=TARGET_REPO_LOCAL_PATH,
-        )
+    return repo_path
 
 
-def create_feature_branch(branch_name: str):
+def create_feature_branch(repo_path: Path, branch_name: str) -> None:
     """
-    Create and checkout a new feature branch from default branch.
+    Creates or checks out a feature branch inside the repo.
     """
-    ensure_repo_cloned()
-    run_git_command(["checkout", TARGET_REPO_DEFAULT_BRANCH], cwd=TARGET_REPO_LOCAL_PATH)
-    run_git_command(
-        ["pull", "origin", TARGET_REPO_DEFAULT_BRANCH],
-        cwd=TARGET_REPO_LOCAL_PATH,
-    )
-    run_git_command(["checkout", "-b", branch_name], cwd=TARGET_REPO_LOCAL_PATH)
+    branch_name = branch_name.strip()
+    if not branch_name:
+        raise ValueError("branch_name cannot be empty")
+
+    # If branch exists locally, checkout works
+    p = run_git_command(["git", "checkout", branch_name], cwd=str(repo_path), allow_fail=True)
+    if p.returncode == 0:
+        return
+
+    # Otherwise create a new branch from current HEAD
+    run_git_command(["git", "checkout", "-b", branch_name], cwd=str(repo_path), allow_fail=False)
 
 
-def commit_and_push(branch_name: str, commit_message: str):
+def commit_and_push(repo_path: Path, branch_name: str, commit_message: str) -> None:
     """
-    Commit all changes and push the given branch to origin.
-    Always commits on the specified branch (not on default branch).
+    Commits changes and pushes the branch.
     """
-    if not TARGET_REPO_LOCAL_PATH.exists():
-        raise RuntimeError("Local repo does not exist. Call ensure_repo_cloned() first.")
-
-    # Make sure we are on the correct branch
-    run_git_command(["checkout", branch_name], cwd=TARGET_REPO_LOCAL_PATH)
-
-    # Stage all changes
-    run_git_command(["add", "."], cwd=TARGET_REPO_LOCAL_PATH)
-
-    # If there's nothing to commit, git commit will fail; handle that gracefully
-    try:
-        run_git_command(["commit", "-m", commit_message], cwd=TARGET_REPO_LOCAL_PATH)
-    except RuntimeError as e:
-        # If commit fails due to "nothing to commit", just skip
-        msg = str(e)
-        if "nothing to commit" in msg or "no changes added to commit" in msg:
-            print("ℹ️ No changes to commit; skipping commit step.")
-        else:
-            raise
-
-    # Push the branch
-    run_git_command(["push", "-u", "origin", branch_name], cwd=TARGET_REPO_LOCAL_PATH)
+    run_git_command(["git", "status"], cwd=str(repo_path))
+    run_git_command(["git", "add", "."], cwd=str(repo_path))
+    run_git_command(["git", "commit", "-m", commit_message], cwd=str(repo_path), allow_fail=False)
+    run_git_command(["git", "push", "-u", "origin", branch_name], cwd=str(repo_path), allow_fail=False)

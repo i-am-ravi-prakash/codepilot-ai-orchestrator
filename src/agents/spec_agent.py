@@ -1,104 +1,86 @@
-import os
+# src/agents/spec_agent.py
+
 import json
-from dotenv import load_dotenv
-from openai import OpenAI
-from src.models.task_spec import TaskSpec
+from typing import Dict, Any, List
+from pathlib import Path
 
-load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from src.services.git_service import ensure_repo_cloned, run_git_command
+from src.services.openai_client import chat_completion_json  # <-- adjust import if your project differs
 
-def _extract_json(content: str) -> str:
+
+SPEC_SCHEMA_EXAMPLE = {
+    "title": "Short task title",
+    "description": "Clear description of what to change",
+    "affected_files": ["path/from/repo/root/File1.ext", "path/from/repo/root/File2.ext"],
+}
+
+
+def _get_repo_file_list(repo_path: Path, limit: int = 3000) -> List[str]:
     """
-    Try to extract a JSON object from the model output,
-    even if it includes markdown fences or extra text.
+    Get tracked files from the repo using `git ls-files`.
     """
-    content = content.strip()
-
-    # If it starts with ``` remove code fences
-    if content.startswith("```"):
-        # Remove leading ``` or ```json
-        lines = content.splitlines()
-        # Drop first line (``` or ```json) and last line (```)
-        if len(lines) >= 2:
-            lines = lines[1:]
-            if lines[-1].strip().startswith("```"):
-                lines = lines[:-1]
-        content = "\n".join(lines).strip()
-
-    # Now find the first '{' and last '}'
-    start = content.find("{")
-    end = content.rfind("}")
-    if start == -1 or end == -1:
-        raise ValueError(f"Could not find JSON object in content: {content!r}")
-
-    json_str = content[start:end+1]
-    return json_str
+    p = run_git_command(["git", "ls-files"], cwd=str(repo_path), allow_fail=False)
+    files = [line.strip() for line in (p.stdout or "").splitlines() if line.strip()]
+    # Avoid sending extremely large lists to LLM
+    return files[:limit]
 
 
-def generate_task_spec(raw_text: str) -> dict:
+def generate_task_spec(user_message: str) -> Dict[str, Any]:
     """
-    Takes a natural language request and returns a TaskSpec as a Python dict.
+    Generates a task spec, including affected_files.
+    IMPORTANT: affected_files MUST exist in current repo.
     """
-    template_task = TaskSpec.create_default()
 
-    system_prompt = """
-You are CodePilot AI Spec Agent.
+    # 1) Ensure repo exists locally
+    repo_path = ensure_repo_cloned()
 
-You receive a natural language request describing a code change, bug fix, or refactor
-for a codebase (currently `journalApp`, a Java Spring Boot app).
+    # 2) Extract real files list
+    repo_files = _get_repo_file_list(repo_path)
 
-Your job is to produce a JSON task specification with at least:
+    if not repo_files:
+        raise RuntimeError("Repo file list is empty. Is the repo cloned correctly?")
 
-- title: short human-readable title
-- description: clear explanation of what to change
-- affected_files: array of relative file paths in the repo
-    - If the user mentions specific file names or paths, use them.
-    - If the user only describes the behavior or error, infer the most likely files
-      based on the description (controllers, services, utilities, etc.).
-    - If you are not sure, include a reasonable best guess and explain in description.
-
-Do NOT include task_id, created_at, type, source, or target_repo in the JSON;
-those will be added by the backend.
-
-Return ONLY JSON.
-""".strip()
-
-    user_prompt = f"""
-User request:
-{raw_text}
-
-Infer the task specification.
-If file paths are not explicitly given, guess the most likely files
-in the journalApp project.
-""".strip()
-
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user",  "content": user_prompt},
-        ],
-        temperature=0.2,
+    # 3) Build prompt that forces choosing from repo_files only
+    system = (
+        "You are CodePilot AI Spec Agent.\n"
+        "Your job is to convert the user's request into a task specification JSON.\n"
+        "CRITICAL RULES:\n"
+        "1) 'affected_files' MUST ONLY contain file paths that exist in the repo file list provided.\n"
+        "2) If you are not confident about file paths, choose the closest matching files from the list.\n"
+        "3) Output MUST be valid JSON only (no markdown, no commentary).\n"
     )
 
-    content = (response.choices[0].message.content or "").strip()
-    print("🔍 RAW MODEL OUTPUT:\n", content)
+    user = {
+        "user_request": user_message,
+        "repo_file_list": repo_files,
+        "required_output_schema": SPEC_SCHEMA_EXAMPLE,
+        "notes": "Choose 1-5 affected_files max. Prefer minimal changes.",
+    }
 
-    # Extract clean JSON and parse it
-    json_str = _extract_json(content)
-    data = json.loads(json_str)
+    # 4) Call model (JSON-only)
+    # chat_completion_json should return a Python dict (parsed JSON)
+    spec = chat_completion_json(system_prompt=system, user_payload=user)
 
-    # Start from the default TaskSpec (which has all required fields)
-    base = template_task.dict()
+    # 5) Validate output minimally
+    if not isinstance(spec, dict):
+        raise RuntimeError("Spec agent returned non-dict output")
 
-    # Overwrite with fields from the model (title, description, affected_files, etc.)
-    base.update(data)
+    spec.setdefault("title", "Untitled Task")
+    spec.setdefault("description", user_message.strip())
+    spec.setdefault("affected_files", [])
 
-    # Force the correct source
-    base["source"] = "CodePilot AI User Portal"
+    # 6) Hard validation: affected_files must exist in repo_files
+    cleaned = []
+    repo_set = set(repo_files)
+    for f in spec.get("affected_files", []) or []:
+        if isinstance(f, str) and f.strip() in repo_set:
+            cleaned.append(f.strip())
 
-    # Validate using TaskSpec model
-    task = TaskSpec(**base)
-    return task.dict()
+    if not cleaned:
+        # fallback: pick at least ONE file to prevent breaking pipeline
+        # (this makes the system demo-able even if LLM struggles)
+        cleaned = [repo_files[0]]
 
+    spec["affected_files"] = cleaned
 
+    return spec
